@@ -1,21 +1,17 @@
 import './style.css'
 import * as THREE from 'three'
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import { TGALoader } from "three/examples/jsm/loaders/TGALoader.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import { RedFormat } from 'three';
 
 // Texture Loader
-const tloader = new THREE.TextureLoader();
-const stars = tloader.load ('./cross2.png');
-const globe = tloader.load ('./globe2.jpg');
-const gold = tloader.load ('./gold.jpg');
-let mixer;
+const loader = new THREE.TextureLoader();
+const cross = loader.load ('./cross0.png');
+const stars = loader.load ('./cross1.png');
+const globe = loader.load ('./globe2.jpg');
 
 
-
-//---------COLORS--------------------------------------------
+//-----------------------------------------------------
 let colorsArray = [
     "63b598", "ce7d78", "ea9e70", "a48a9e", "c6e1e8", "648177", "0d5ac1",
     "f205e6", "1c0365", "14a9ad", "4ca2f9", "a4e43f", "d298e2", "6119d0",
@@ -58,12 +54,20 @@ let colorsArray = [
     "f812b3", "b17fc9", "8d6c2f", "d3277a", "2ca1ae", "9685eb", "8a96c6",
     "dba2e6", "76fc1b", "608fa4", "20f6ba", "07d7f6", "dce77a", "77ecca"]
 
-    // colors
-  const colour = new THREE.Color();
-  colour.setHex(`0x${colorsArray[Math.floor(Math.random() * colorsArray.length)]}`);
-  if (colour < 500) {
-      colour.setHex(500);
-  }
+// var textureLoader = new Array(5).fill(0).map((_, index) => {
+//     return loader.load('./' + pad(index, 6) + '.png');
+//   });
+//   function pad (num, size) {
+//     return ('cross' + num).substr(-size);
+//   }
+
+//-------------------------------------------------
+  
+// const cross = loader.load ('./cross.png');
+// const cross2 = loader.load ('./cross2.png');
+// const cross3 = loader.load ('./cross3.png');
+// const cross4 = loader.load ('./cross4.png');
+// const cross5 = loader.load ('./cross5.png');
 
 // Debug
 const gui = new dat.GUI()
@@ -90,7 +94,24 @@ for(let i = 0; i < particlesCnt * 3; i++) {
 
 particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posAray, 3))
 
-    
+
+var uniforms = {
+    mouse: {
+      value: new THREE.Vector3()
+    },
+    radius: {
+        value: 0.5
+    }
+  };
+
+  // colors
+  const colour = new THREE.Color();
+  colour.setHex(`0x${colorsArray[Math.floor(Math.random() * colorsArray.length)]}`);
+  if (colour < 500) {
+      colour.setHex(500);
+  }
+
+  //---------
 // Materials
 
 const material = new THREE.MeshBasicMaterial({
@@ -106,49 +127,9 @@ const particlesMaterial = new THREE.PointsMaterial({
     color: colour
 })
 
-// Mesh
-// const sphere = new THREE.Mesh(geometry,material)
-const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
-
-// model
-
-const manager = new THREE.LoadingManager();
-manager.addHandler(/\.tga$/i, new TGALoader());
-
-const loader = new FBXLoader(manager);
-loader.load("./logo.fbx", function (object) {
-  const model = object.scene;
-  mixer = new THREE.AnimationMixer(object);
-  mixer.timeScale *= 9;
-  
-  const action = mixer.clipAction(object.animations[0]);
-  action.play();
-  
-  object.traverse(function (child) {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      child.material.map = gold;
-    }
-  });
-  object.scale.multiplyScalar(0.007); 
-  // object.timeScale = 10; 
-   
-  scene.add(object);
-});
-
-scene.add(particlesMesh)
+// particlesMaterial.color = new THREE.Color("rgb(255%, 255%, 0%)") 
 
 // Interaction 
-
-var uniforms = {
-  mouse: {
-    value: new THREE.Vector3()
-  },
-  radius: {
-      value: 0.5
-  }
-};
 
 material.onBeforeCompile = shader => {
 	shader.uniforms.mouse = uniforms.mouse;
@@ -190,9 +171,19 @@ window.addEventListener("mousemove", event =>{
   raycaster.ray.intersectPlane(plane, uniforms.mouse.value);
 });
 
+
+  
+
+
+// Mesh
+const sphere = new THREE.Mesh(geometry,material)
+const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
+
+scene.add(sphere, particlesMesh)
+
 // Lights
 
-const pointLight = new THREE.PointLight(0xffffff, 2)
+const pointLight = new THREE.PointLight(0xffffff, 0.1)
 pointLight.position.x = 2
 pointLight.position.y = 3
 pointLight.position.z = 4
@@ -273,8 +264,7 @@ const tick = () =>
     const elapsedTime = clock.getElapsedTime()
 
     // Update objects
-    // sphere.rotation.y = .5 * elapsedTime
-    // sphere.rotation.y = .5 * elapsedTime
+    sphere.rotation.y = .5 * elapsedTime
     particlesMesh.rotation.y = .1 * elapsedTime
 
     if (mouseX > 0) {
@@ -291,8 +281,6 @@ const tick = () =>
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
-    const delta = clock.getDelta();
-    if (mixer) mixer.update(delta);
 }
 
 tick()
